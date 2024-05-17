@@ -9,7 +9,7 @@ from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
 
 # Ссылка на файл модели в Google Drive
-url = 'https://drive.google.com/file/d/1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs/view?usp=sharing'
+url = 'https://drive.google.com/uc?id=1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs'
 output = 'steel_microstructure_model.keras'
 
 # Загрузка файла модели
