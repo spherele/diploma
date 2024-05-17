@@ -48,7 +48,6 @@ else:
         return list(train_data.class_indices.keys())
 
     data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/train'))
-    st.write(f"Путь к данным: {data_dir}")
 
     if not os.path.exists(data_dir):
         st.error(f"Директория с данными не найдена: {data_dir}")
