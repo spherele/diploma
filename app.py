@@ -5,10 +5,15 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+
+# Добавление пути к src, чтобы модули могли быть импортированы
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
+
 from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
 
-model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../results/steel_microstructure_model.keras'))
+# Путь к модели
+model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'results/steel_microstructure_model.keras'))
 
 if not os.path.exists(model_path):
     st.error(f"Model file not found: {model_path}")
@@ -29,7 +34,8 @@ else:
     def get_class_labels(train_data):
         return list(train_data.class_indices.keys())
 
-    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/train'))
+    # Путь к данным
+    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'datasets/train'))
     dataset = SteelMicrostructureDataset(data_dir)
     dataset.load_data()
     class_labels = get_class_labels(dataset.train_data)
