@@ -1,3 +1,4 @@
+import gdown
 import os
 import streamlit as st
 from tensorflow.keras.models import load_model
@@ -7,7 +8,17 @@ from PIL import Image
 from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
 
-model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../results/steel_microstructure_model.keras'))
+# Ссылка на файл модели в Google Drive
+url = 'https://drive.google.com/file/d/1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs/view?usp=sharing'
+output = 'steel_microstructure_model.keras'
+
+# Загрузка файла модели
+if not os.path.exists(output):
+    gdown.download(url, output, quiet=False)
+
+# Путь к загруженной модели
+model_path = os.path.abspath(output)
+st.write(f"Путь к модели: {model_path}")
 
 if not os.path.exists(model_path):
     st.error(f"Файл модели не найден: {model_path}")
@@ -15,6 +26,7 @@ else:
     try:
         model = load_model(model_path, compile=False)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        st.write("Модель успешно загружена!")
     except Exception as e:
         st.error(f"Ошибка при загрузке модели: {e}")
         st.stop()
@@ -33,6 +45,12 @@ else:
         return list(train_data.class_indices.keys())
 
     data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/train'))
+    st.write(f"Путь к данным: {data_dir}")
+
+    if not os.path.exists(data_dir):
+        st.error(f"Директория с данными не найдена: {data_dir}")
+        st.stop()
+
     dataset = SteelMicrostructureDataset(data_dir)
     dataset.load_data()
     class_labels = get_class_labels(dataset.train_data)
