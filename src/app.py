@@ -10,10 +10,14 @@ from model import SteelMicrostructureModel
 model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../results/steel_microstructure_model.keras'))
 
 if not os.path.exists(model_path):
-    st.error(f"Model file not found: {model_path}")
+    st.error(f"Файл модели не найден: {model_path}")
 else:
-    model = load_model(model_path, compile=False)
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    try:
+        model = load_model(model_path, compile=False)
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    except Exception as e:
+        st.error(f"Ошибка при загрузке модели: {e}")
+        st.stop()
 
     def predict_image(img, model):
         img = img.resize((150, 150))
@@ -33,18 +37,18 @@ else:
     dataset.load_data()
     class_labels = get_class_labels(dataset.train_data)
 
-    st.title("Steel Microstructure Classification")
-    st.write("Upload an image to classify its microstructure.")
+    st.title("Классификация микроструктуры стали")
+    st.write("Загрузите изображение для классификации его микроструктуры.")
 
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png", "bmp"])
+    uploaded_file = st.file_uploader("Выберите изображение...", type=["jpg", "jpeg", "png", "bmp"])
 
     if uploaded_file is not None:
         img = Image.open(uploaded_file)
-        st.image(img, caption='Uploaded Image', use_column_width=True)
+        st.image(img, caption='Загруженное изображение', use_column_width=True)
 
         predictions = predict_image(img, model)
         predicted_class = class_labels[np.argmax(predictions)]
         confidence = np.max(predictions)
 
-        st.write(f"Predicted Class: {predicted_class}")
-        st.write(f"Confidence: {confidence:.2f}")
+        st.write(f"Предсказанный класс: {predicted_class}")
+        st.write(f"Уверенность: {confidence:.2f}")
