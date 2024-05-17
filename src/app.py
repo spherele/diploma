@@ -8,25 +8,28 @@ from PIL import Image
 from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
 
-# Ссылка на файл модели в Google Drive
-url = 'https://drive.google.com/uc?id=1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs'
-output = 'steel_microstructure_model.keras'
+# Определяем переменную окружения для локальной работы
+IS_LOCAL = os.getenv('IS_LOCAL', 'False').lower() in ('true', '1', 't')
 
-# Загрузка файла модели
-if not os.path.exists(output):
-    gdown.download(url, output, quiet=False)
+# Указываем путь к модели для локального окружения и ссылку для облачного
+if IS_LOCAL:
+    model_path = os.path.abspath('../results/steel_microstructure_model.keras')
+else:
+    url = 'https://drive.google.com/uc?id=1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs'
+    output = 'steel_microstructure_model.keras'
+    model_path = os.path.abspath(output)
 
-# Путь к загруженной модели
-model_path = os.path.abspath(output)
-st.write(f"Путь к модели: {model_path}")
+    # Загрузка файла модели, если он не существует
+    if not os.path.exists(output):
+        gdown.download(url, output, quiet=False)
 
+# Проверка существования файла модели
 if not os.path.exists(model_path):
     st.error(f"Файл модели не найден: {model_path}")
 else:
     try:
         model = load_model(model_path, compile=False)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-        st.write("Модель успешно загружена!")
     except Exception as e:
         st.error(f"Ошибка при загрузке модели: {e}")
         st.stop()
