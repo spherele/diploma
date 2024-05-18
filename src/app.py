@@ -80,25 +80,15 @@ else:
     example_image_labels = [os.path.basename(img_path) for img_path in example_images]
 
     # Отображение предложенных изображений в виде превью
-    st.write("Или выберите пример изображения:")
     cols = st.columns(num_examples)
     for i, img_path in enumerate(example_images):
         with cols[i]:
             img = Image.open(img_path)
             st.image(img, caption=os.path.basename(img_path), use_column_width=True)
 
-    selected_example = st.selectbox("Выберите изображение", ["None"] + example_image_labels)
+    selected_example = st.selectbox("Выбрать изображение из предложенных", ["Не задано"] + example_image_labels)
 
-    # Кнопка для сброса выбора под выпадающим списком
-    if st.button("Сбросить"):
-        st.session_state.selected_source = None
-        st.session_state.example_images = random.sample(all_images, num_examples)
-        st.session_state.uploaded_file_path = None
-        st.session_state.selected_example = "None"
-        st.session_state.uploaded_file = None
-        st.experimental_rerun()
-
-    uploaded_file = st.file_uploader("Или загрузите изображение...", type=["jpg", "jpeg", "png", "bmp"])
+    uploaded_file = st.file_uploader("Загрузить своё изображение", type=["jpg", "jpeg", "png", "bmp"])
 
     img_path = None
 
@@ -107,13 +97,13 @@ else:
         st.session_state.selected_source = None
 
     # Проверяем, изменился ли источник изображения
-    if selected_example != "None":
+    if selected_example != "Не задано":
         st.session_state.selected_source = "example"
         st.session_state.uploaded_file_path = None  # Очищаем загруженный файл
         img_path = example_images[example_image_labels.index(selected_example)]
     elif uploaded_file is not None:
         st.session_state.selected_source = "uploaded"
-        st.session_state.selected_example = "None"  # Очищаем выбранное изображение из списка
+        st.session_state.selected_example = "Не задано"  # Очищаем выбранное изображение из списка
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(uploaded_file.read())
             st.session_state.uploaded_file_path = temp_file.name
