@@ -8,6 +8,7 @@ from PIL import Image
 from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
 import random
+import tempfile
 
 # Определяем переменную окружения для локальной работы
 IS_LOCAL = os.getenv('IS_LOCAL', 'False').lower() in ('true', '1', 't')
@@ -88,22 +89,41 @@ else:
 
     selected_example = st.selectbox("Выберите изображение", ["None"] + example_image_labels)
 
+    # Кнопка для сброса выбора под выпадающим списком
+    if st.button("Сбросить"):
+        st.session_state.selected_source = None
+        st.session_state.example_images = random.sample(all_images, num_examples)
+        st.session_state.uploaded_file_path = None
+        st.session_state.selected_example = "None"
+        st.session_state.uploaded_file = None
+        st.experimental_rerun()
+
     uploaded_file = st.file_uploader("Или загрузите изображение...", type=["jpg", "jpeg", "png", "bmp"])
 
     img_path = None
 
+    # Добавляем флаг для отслеживания источника изображения
+    if 'selected_source' not in st.session_state:
+        st.session_state.selected_source = None
+
+    # Проверяем, изменился ли источник изображения
     if selected_example != "None":
+        st.session_state.selected_source = "example"
+        st.session_state.uploaded_file_path = None  # Очищаем загруженный файл
         img_path = example_images[example_image_labels.index(selected_example)]
-        st.image(img_path, caption=f'Выбранное изображение: {selected_example}', use_column_width=True)
     elif uploaded_file is not None:
-        st.write("Uploaded file")
+        st.session_state.selected_source = "uploaded"
+        st.session_state.selected_example = "None"  # Очищаем выбранное изображение из списка
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(uploaded_file.read())
-            img_path = temp_file.name
-        st.image(img_path, caption='Загруженное изображение', use_column_width=True)
+            st.session_state.uploaded_file_path = temp_file.name
+        img_path = st.session_state.uploaded_file_path
 
+    # Отображаем изображение, если оно выбрано или загружено
+    if img_path:
+        st.image(img_path, caption='Выбранное изображение', use_column_width=True)
 
-    if img_path is not None:
+    if img_path:
         try:
             predictions = predict_image(img_path, model)
             predictions = predictions[0]  # Убираем дополнительное измерение
