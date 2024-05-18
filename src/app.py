@@ -7,13 +7,14 @@ import numpy as np
 from PIL import Image
 from dataset import SteelMicrostructureDataset
 from model import SteelMicrostructureModel
+import random
 
 # Определяем переменную окружения для локальной работы
 IS_LOCAL = os.getenv('IS_LOCAL', 'False').lower() in ('true', '1', 't')
 
 # Указываем путь к модели для локального окружения и ссылку для облачного
 if IS_LOCAL:
-    model_path = os.path.abspath('../results/steel_microstructure_model.keras')
+    model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results', 'steel_microstructure_model.keras'))
 else:
     url = 'https://drive.google.com/uc?id=1-e9pdmzMP2-cE7NcV1yplRYPEpwcaZfs'
     output = 'steel_microstructure_model.keras'
@@ -34,7 +35,8 @@ else:
         st.error(f"Ошибка при загрузке модели: {e}")
         st.stop()
 
-    def predict_image(img, model):
+    def predict_image(img_path, model):
+        img = Image.open(img_path)
         img = img.resize((150, 150))
         if img.mode != "RGB":
             img = img.convert("RGB")
@@ -47,7 +49,8 @@ else:
     def get_class_labels(train_data):
         return list(train_data.class_indices.keys())
 
-    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/train'))
+    # Обновляем путь к директории с данными
+    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'datasets', 'train'))
 
     if not os.path.exists(data_dir):
         st.error(f"Директория с данными не найдена: {data_dir}")
@@ -58,17 +61,63 @@ else:
     class_labels = get_class_labels(dataset.train_data)
 
     st.title("Классификация микроструктуры стали")
-    st.write("Загрузите изображение для классификации его микроструктуры.")
+    st.write("Загрузите изображение для классификации его микроструктуры или выберите одно из предложенных.")
 
-    uploaded_file = st.file_uploader("Выберите изображение...", type=["jpg", "jpeg", "png", "bmp"])
+    # Получаем список всех изображений в папке datasets/valid
+    valid_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'datasets', 'valid'))
+    all_images = []
+    for root, dirs, files in os.walk(valid_dir):
+        for file in files:
+            if file.lower().endswith(('jpg', 'jpeg', 'png', 'bmp')):
+                all_images.append(os.path.join(root, file))
 
-    if uploaded_file is not None:
-        img = Image.open(uploaded_file)
-        st.image(img, caption='Загруженное изображение', use_column_width=True)
+    # Выбираем случайные изображения
+    num_examples = 4
+    if 'example_images' not in st.session_state:
+        st.session_state.example_images = random.sample(all_images, num_examples)
+    example_images = st.session_state.example_images
+    example_image_labels = [os.path.basename(img_path) for img_path in example_images]
 
-        predictions = predict_image(img, model)
-        predicted_class = class_labels[np.argmax(predictions)]
-        confidence = np.max(predictions)
+    # Отображение предложенных изображений в виде превью
+    st.write("Или выберите пример изображения:")
+    cols = st.columns(num_examples)
+    for i, img_path in enumerate(example_images):
+        with cols[i]:
+            img = Image.open(img_path)
+            st.image(img, caption=os.path.basename(img_path), use_column_width=True)
 
-        st.write(f"Предсказанный класс: {predicted_class}")
-        st.write(f"Уверенность: {confidence:.2f}")
+    selected_example = st.selectbox("Выберите изображение", ["None"] + example_image_labels)
+
+    uploaded_file = st.file_uploader("Или загрузите изображение...", type=["jpg", "jpeg", "png", "bmp"])
+
+    img_path = None
+
+    if selected_example != "None":
+        img_path = example_images[example_image_labels.index(selected_example)]
+        st.image(img_path, caption=f'Выбранное изображение: {selected_example}', use_column_width=True)
+    elif uploaded_file is not None:
+        st.write("Uploaded file")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+            temp_file.write(uploaded_file.read())
+            img_path = temp_file.name
+        st.image(img_path, caption='Загруженное изображение', use_column_width=True)
+
+
+    if img_path is not None:
+        try:
+            predictions = predict_image(img_path, model)
+            predictions = predictions[0]  # Убираем дополнительное измерение
+
+            # Выводим все классы и значения уверенности
+            st.write("Классы и значения уверенности:")
+            for label, confidence in zip(class_labels, predictions):
+                st.write(f"{label}: {confidence:.2f}")
+
+            # Предсказанный класс и уверенность для него
+            predicted_class = class_labels[np.argmax(predictions)]
+            confidence = np.max(predictions)
+
+            st.write(f"Предсказанный класс: {predicted_class}")
+            st.write(f"Уверенность: {confidence:.2f}")
+        except Exception as e:
+            st.error(f"Ошибка при предсказании: {e}")
