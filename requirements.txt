@@ -4,3 +4,4 @@ pillow~=10.3.0
 tensorflow~=2.16.1
 dataset~=1.6.2
 gdown~=5.2.0
+pandas~=2.2.2

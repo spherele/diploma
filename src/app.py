@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
 from dataset import SteelMicrostructureDataset
-from model import SteelMicrostructureModel
+import pandas as pd
 import random
 import tempfile
 
