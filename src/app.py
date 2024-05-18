@@ -128,10 +128,15 @@ else:
             predictions = predict_image(img_path, model)
             predictions = predictions[0]  # Убираем дополнительное измерение
 
-            # Выводим все классы и значения уверенности
-            st.write("Классы и значения уверенности:")
-            for label, confidence in zip(class_labels, predictions):
-                st.write(f"{label}: {confidence:.2f}")
+            # Подготовка данных для таблицы
+            data = {
+                "Класс": class_labels,
+                "Уверенность": [f"{confidence:.2f}" for confidence in predictions]
+            }
+            df = pd.DataFrame(data)  # Исправлено использование pandas
+
+            # Вывод данных в виде таблицы
+            st.table(df)
 
             # Предсказанный класс и уверенность для него
             predicted_class = class_labels[np.argmax(predictions)]
