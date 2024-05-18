@@ -1,12 +1,13 @@
-import gdown
 import os
+
+import gdown
+import numpy as np
 import streamlit as st
+from PIL import Image
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
-import numpy as np
-from PIL import Image
+
 from dataset import SteelMicrostructureDataset
-from model import SteelMicrostructureModel
 
 # Определяем переменную окружения для локальной работы
 IS_LOCAL = os.getenv('IS_LOCAL', 'False').lower() in ('true', '1', 't')
@@ -67,6 +68,14 @@ else:
         st.image(img, caption='Загруженное изображение', use_column_width=True)
 
         predictions = predict_image(img, model)
+        predictions = predictions[0]  # Убираем дополнительное измерение
+
+        # Выводим все классы и значения уверенности
+        st.write("Классы и значения уверенности:")
+        for label, confidence in zip(class_labels, predictions):
+            st.write(f"{label}: {confidence:.2f}")
+
+        # Предсказанный класс и уверенность для него
         predicted_class = class_labels[np.argmax(predictions)]
         confidence = np.max(predictions)
 
